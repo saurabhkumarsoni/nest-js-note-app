@@ -32,19 +32,6 @@ export class UsersService {
     return user;
   }
 
-  // createUser
-  // async createUser(userDto: CreateUserDto): Promise<User> {
-  //   const existingUser = await this.userRepo.findOne({
-  //     where: { email: userDto.email },
-  //   });
-
-  //   if (existingUser) {
-  //     throw new BadRequestException('User with this email already exists');
-  //   }
-
-  //   const newUser = this.userRepo.create(userDto);
-  //   return this.userRepo.save(newUser);
-  // }
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const user = this.userRepo.create(createUserDto);
     const savedUser = await this.userRepo.save(user);

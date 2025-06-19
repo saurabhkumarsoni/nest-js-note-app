@@ -33,7 +33,6 @@ export class NotesController {
     return this.notesService.createNote(dto, user);
   }
 
-  // 👇 ADD THIS BEFORE @Get(':id')
   @Get('/search')
   async search(
     @Req() req: Request,
@@ -42,8 +41,8 @@ export class NotesController {
     @Query('toDate') toDate?: string,
     @Query('limit') limit = '10',
     @Query('page') page = '1',
-    @Query('sortBy') sortBy?: keyof Note,
-    @Query('order') order?: 'ASC' | 'DESC',
+    @Query('sortBy') sortBy?: string,
+    @Query('order') order?: string,
   ) {
     const user = req.user as any;
     return this.notesService.getUserNotes({
@@ -57,7 +56,7 @@ export class NotesController {
       order,
     });
   }
-  // ✅ KEEP THIS LAST
+
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
     const user = req.user as any;

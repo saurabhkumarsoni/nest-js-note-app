@@ -46,14 +46,16 @@ export class NotesService {
     toDate?: string;
     limit: number;
     page: number;
-    sortBy?: keyof Note;
-    order?: 'ASC' | 'DESC';
+    sortBy?: string;
+    order?: string;
   }) {
     const validSortFields: (keyof Note)[] = ['createdAt', 'updatedAt', 'name'];
-    const safeSortBy: keyof Note = validSortFields.includes(sortBy)
-      ? sortBy
+    const safeSortBy = validSortFields.includes(sortBy as keyof Note)
+      ? (sortBy as keyof Note)
       : 'updatedAt';
-    const safeOrder: 'ASC' | 'DESC' = order === 'ASC' ? 'ASC' : 'DESC';
+
+    const safeOrder: 'ASC' | 'DESC' =
+      order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     let query = this.noteRepo
       .createQueryBuilder('note')
