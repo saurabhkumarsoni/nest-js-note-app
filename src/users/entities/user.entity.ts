@@ -4,7 +4,7 @@ import { Note } from '../../notes/entities/note.entity';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: string;
 
   @Column({ type: 'varchar', length: 100, nullable: false })
   firstName: string;
@@ -26,4 +26,9 @@ export class User {
 
   @OneToMany(() => Note, (note) => note.user)
   notes: Note[];
+
+  // @Column({ nullable: true, type: 'varchar' })
+  // hashedRefreshToken: string | null;
+  @Column({ type: 'text', nullable: true, select: false })
+  hashedRefreshToken: string | null;
 }

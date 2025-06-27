@@ -1,13 +1,10 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +12,15 @@ export class UsersService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
   ) {}
+
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    const hashedToken = await bcrypt.hash(refreshToken, 10);
+    await this.userRepo.update(userId, { hashedRefreshToken: hashedToken });
+  }
+
+  async removeRefreshToken(userId: number) {
+    await this.userRepo.update(userId, { hashedRefreshToken: null });
+  }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepo.findOne({ where: { email } });
@@ -24,7 +30,7 @@ export class UsersService {
     return this.userRepo.find();
   }
 
-  async getUserById(id: number): Promise<User> {
+  async getUserById(id: string): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
@@ -34,11 +40,10 @@ export class UsersService {
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const user = this.userRepo.create(createUserDto);
-    const savedUser = await this.userRepo.save(user);
-    return savedUser; // ✅ must include 'id'
+    return await this.userRepo.save(user);
   }
 
-  async updateUser(id: number, updateDto: UpdateUserDto): Promise<User> {
+  async updateUser(id: string, updateDto: UpdateUserDto): Promise<User> {
     const user = await this.getUserById(id);
     const updatedUser = Object.assign(user, updateDto);
     return this.userRepo.save(updatedUser);
@@ -50,5 +55,11 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
     return { message: `User with id ${id} has been deleted.` };
+  }
+
+  async findById(id: string): Promise<User> {
+    const user = await this.userRepo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 }
