@@ -9,7 +9,9 @@ describe('ResourceManagerController', () => {
       controllers: [ResourceManagerController],
     }).compile();
 
-    controller = module.get<ResourceManagerController>(ResourceManagerController);
+    controller = module.get<ResourceManagerController>(
+      ResourceManagerController,
+    );
   });
 
   it('should be defined', () => {

@@ -1,49 +1,81 @@
 import {
-  IsBoolean,
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
   IsString,
-  IsInt,
-  Max,
-  Min,
+  IsEmail,
+  IsOptional,
+  IsBoolean,
   MaxLength,
   MinLength,
+  IsArray,
+  ValidateNested,
+  IsObject,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class AddressDto {
+  @IsString() street: string;
+  @IsString() city: string;
+  @IsString() state: string;
+  @IsString() zip: string;
+  @IsString() country: string;
+}
+
+class ProjectDto {
+  @IsString() name: string;
+  @IsString() description: string;
+  @IsString() techStack: string;
+}
+
+class EducationDto {
+  @IsString() degree: string;
+  @IsString() university: string;
+  @IsOptional()
+  yearOfPassing: number;
+}
 
 export class CreateUserDto {
-  @IsString({ message: 'First Name should be a string.' })
-  @IsNotEmpty()
-  @MinLength(3, { message: 'First Name should have at least 3 characters.' })
-  @MaxLength(100)
-  firstName: string;
+  @IsString() @MinLength(3) @MaxLength(100) firstName: string;
+  @IsString() @MinLength(3) @MaxLength(100) lastName: string;
 
-  @IsString({ message: 'Last Name should be a string.' })
-  @IsNotEmpty()
-  @MinLength(3, { message: 'Last Name should have at least 3 characters.' })
-  @MaxLength(100)
-  lastName: string;
+  @IsEmail() @MaxLength(100) email: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() profileImage?: string;
+  @IsOptional() @IsString() dateOfBirth?: string;
+  @IsOptional() @IsString() dateOfJoining?: string;
+  @IsOptional() @IsString() gender?: string;
 
-  @IsInt({ message: 'Age must be an integer.' })
-  @Min(0)
-  @Max(120)
-  age: number;
+  @IsOptional() @IsString() position?: string;
+  @IsOptional() @IsString() department?: string;
+  @IsOptional() @IsString() employeeId?: string;
+  @IsOptional() @IsString() reportingManager?: string;
+  @IsOptional() @IsString() experience?: string;
+
+  @IsBoolean() isMarried: boolean;
+
+  @IsOptional() @IsString() linkedin?: string;
+  @IsOptional() @IsString() github?: string;
 
   @IsOptional()
-  @IsString({ message: 'Gender must be a string.' })
-  @MaxLength(10)
-  gender?: string;
+  @IsObject()
+  @ValidateNested()
+  @Type(() => AddressDto)
+  address?: AddressDto;
 
-  @IsEmail({}, { message: 'Invalid email format.' })
-  @MaxLength(100)
-  email: string;
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skills?: string[];
 
-  @IsBoolean({ message: 'isMarried must be a boolean.' })
-  isMarried: boolean;
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProjectDto)
+  projects?: ProjectDto[];
 
-  @IsString({ message: 'Password must be a string.' })
-  @IsNotEmpty()
-  @MinLength(6, { message: 'Password must be at least 6 characters long.' })
-  @MaxLength(200)
-  password: string;
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => EducationDto)
+  education?: EducationDto[];
+
+  @IsString() @MinLength(6) @MaxLength(200) password: string;
 }

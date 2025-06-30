@@ -2,20 +2,25 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { join } from 'path'; // ✅
+import { NestExpressApplication } from '@nestjs/platform-express'; // ✅
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule); // ✅
 
-  // ✅ Enable CORS to allow Angular frontend to access the backend
   app.enableCors({
-    origin: 'http://localhost:4200', // Angular dev server URL
+    origin: 'http://localhost:4200',
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
-  // ✅ Global error handling filter
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
+
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // ✅ Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Notes API')
     .setDescription('API for user-authenticated note-taking')

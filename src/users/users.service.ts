@@ -5,6 +5,7 @@ import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class UsersService {
@@ -30,12 +31,12 @@ export class UsersService {
     return this.userRepo.find();
   }
 
-  async getUserById(id: string): Promise<User> {
+  async getUserById(id: string): Promise<any> {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    return user;
+    return instanceToPlain(user); // this removes @Exclude() fields
   }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -44,12 +45,13 @@ export class UsersService {
   }
 
   async updateUser(id: string, updateDto: UpdateUserDto): Promise<User> {
+    console.log(UpdateUserDto);
     const user = await this.getUserById(id);
     const updatedUser = Object.assign(user, updateDto);
     return this.userRepo.save(updatedUser);
   }
 
-  async deleteUser(id: number): Promise<{ message: string }> {
+  async deleteUser(id: string): Promise<{ message: string }> {
     const result = await this.userRepo.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`User with id ${id} not found`);
