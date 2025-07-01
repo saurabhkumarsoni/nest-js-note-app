@@ -3,24 +3,21 @@ import {
   Controller,
   Get,
   Param,
-  Patch,
   Delete,
   UseGuards,
-  ParseIntPipe,
   HttpCode,
-  Req,
   Put,
-  Post,
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -29,7 +26,12 @@ import { extname } from 'path';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  /**
+   * Upload a new profile image for a user
+   * Endpoint: PUT /api/users/:id/upload
+   */
   @Put(':id/upload')
+  @ApiOperation({ summary: 'Upload profile image for user' })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -47,27 +49,41 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
     @Param('id') id: string,
   ) {
-    console.log('📸 Uploaded file:', file); // 👈 add this line
-
     if (!file) {
       throw new Error('No file uploaded');
     }
 
     const imageUrl = `http://localhost:3000/uploads/profile-images/${file.filename}`;
-    return this.usersService.updateUser(id, { profileImage: imageUrl });
+
+    return this.usersService.updateUser(id, {
+      profileImage: imageUrl,
+    });
   }
 
+  /**
+   * Get all users
+   * Endpoint: GET /api/users
+   */
   @Get()
   @ApiOperation({ summary: 'Get all users' })
-  getUsers() {
+  getAllUsers() {
     return this.usersService.getAllUsers();
   }
 
-  @Get(':id') // ✅ this was missing
+  /**
+   * Get user by ID
+   * Endpoint: GET /api/users/:id
+   */
+  @Get(':id')
+  @ApiOperation({ summary: 'Get user by ID' })
   getUserById(@Param('id') id: string) {
     return this.usersService.getUserById(id);
   }
 
+  /**
+   * Update user by ID
+   * Endpoint: PUT /api/users/:id
+   */
   @Put(':id')
   @HttpCode(200)
   @ApiOperation({ summary: 'Update user by ID' })
@@ -75,7 +91,12 @@ export class UsersController {
     return this.usersService.updateUser(id, updateUserDto);
   }
 
+  /**
+   * Delete user by ID
+   * Endpoint: DELETE /api/users/:id
+   */
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete user by ID' })
   deleteUser(@Param('id') id: string) {
     return this.usersService.deleteUser(id);
   }
