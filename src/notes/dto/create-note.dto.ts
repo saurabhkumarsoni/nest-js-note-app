@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateNoteDto {
   @IsNotEmpty()
@@ -12,4 +12,12 @@ export class CreateNoteDto {
   @IsOptional()
   @IsString()
   quoteId?: string;
+
+  @IsOptional()
+  @IsArray()
+  tags?: string[];
+
+  @IsOptional()
+  @IsInt()
+  categoryId?: number;
 }

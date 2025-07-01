@@ -7,6 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import { NotesModule } from './notes/notes.module';
 import { ResourceManagerModule } from './resource-manager/resource-manager.module';
 import { StaticDataModule } from './static-data/static-data.module';
+import { TagModule } from './tag/tag.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { StaticDataModule } from './static-data/static-data.module';
     NotesModule,
     ResourceManagerModule,
     StaticDataModule,
+    TagModule,
+    CategoryModule,
   ],
 })
 export class AppModule {}

@@ -7,10 +7,12 @@ import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { HttpModule } from '@nestjs/axios';
+import { Tag } from 'src/tag/entities/tag.entity';
+import { Category } from 'src/category/entities/category.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Note, User]),
+    TypeOrmModule.forFeature([Note, User, Tag, Category]),
     UsersModule,
     CacheModule.register(),
     HttpModule,

@@ -30,7 +30,7 @@ export class NotesController {
   @Post()
   async create(@Body() dto: CreateNoteDto, @Req() req: Request) {
     const user = req.user as any;
-    return this.notesService.createNote(dto, user);
+    return this.notesService.createNote(user.id, dto); // ✅ Fixed order
   }
 
   @Get('/search')
@@ -98,7 +98,12 @@ export class NotesController {
     @Req() req: Request,
   ) {
     const user = req.user as any;
-    return this.notesService.updateNote(id, dto, user.id);
+    const note = await this.notesService.findNoteById(id);
+    if (!note || note.userId !== user.id) {
+      throw new ForbiddenException('You do not have access to this note');
+    }
+
+    return this.notesService.updateNote(id, dto); // ✅ Fixed number of arguments
   }
 
   @Delete(':id')
