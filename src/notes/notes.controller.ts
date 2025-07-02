@@ -11,6 +11,7 @@ import {
   Req,
   ForbiddenException,
   ParseUUIDPipe,
+  Patch,
 } from '@nestjs/common';
 import { NotesService } from './notes.service';
 import { CreateNoteDto } from './dto/create-note.dto';
@@ -19,7 +20,7 @@ import { Request } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Note } from './entities/note.entity';
-
+import { GetUser } from '../auth/decorators/get-user.decorator';
 @ApiTags('Notes')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -30,7 +31,7 @@ export class NotesController {
   @Post()
   async create(@Body() dto: CreateNoteDto, @Req() req: Request) {
     const user = req.user as any;
-    return this.notesService.createNote(user.id, dto); // ✅ Fixed order
+    return this.notesService.createNote(user.id, dto);
   }
 
   @Get('/search')
@@ -41,8 +42,9 @@ export class NotesController {
     @Query('toDate') toDate?: string,
     @Query('limit') limit = '10',
     @Query('page') page = '1',
-    @Query('sortBy') sortBy?: string,
-    @Query('order') order?: string,
+    @Query('sortBy') sortBy?: keyof Note,
+    @Query('order') order?: 'ASC' | 'DESC',
+    @Query('filter') filter?: 'all' | 'archived' | 'trashed',
   ) {
     const user = req.user as any;
     return this.notesService.getUserNotes({
@@ -54,17 +56,8 @@ export class NotesController {
       page: parseInt(page),
       sortBy,
       order,
+      filter,
     });
-  }
-
-  @Get(':id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
-    const user = req.user as any;
-    const note = await this.notesService.findNoteById(id);
-    if (!note || note.userId !== user.id) {
-      throw new ForbiddenException('You do not have access to this note');
-    }
-    return note;
   }
 
   @Get()
@@ -77,18 +70,39 @@ export class NotesController {
     @Query('page') page = '1',
     @Query('sortBy') sortBy?: keyof Note,
     @Query('order') order?: 'ASC' | 'DESC',
+    @Query('filter') filter?: 'all' | 'archived' | 'trashed',
   ) {
     const user = req.user as any;
     return this.notesService.getUserNotes({
       userId: user.id,
-      search,
+      search: search?.trim() || undefined, // ✅ Avoid passing 'all'
       fromDate,
       toDate,
       limit: parseInt(limit),
       page: parseInt(page),
       sortBy,
       order,
+      filter,
     });
+  }
+
+  @Get('count')
+  getNoteCount(
+    @Query('filter') filter: 'archived' | 'trashed',
+    @Req() req: Request,
+  ) {
+    const userId = (req.user as any).id; // ← now truly a string
+    return this.notesService.getNoteCount(filter, userId);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as any;
+    const note = await this.notesService.findNoteById(id);
+    if (!note || note.userId !== user.id) {
+      throw new ForbiddenException('You do not have access to this note');
+    }
+    return note;
   }
 
   @Put(':id')
@@ -102,13 +116,27 @@ export class NotesController {
     if (!note || note.userId !== user.id) {
       throw new ForbiddenException('You do not have access to this note');
     }
-
-    return this.notesService.updateNote(id, dto); // ✅ Fixed number of arguments
+    return this.notesService.updateNote(id, dto);
   }
 
   @Delete(':id')
   async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
     const user = req.user as any;
     return this.notesService.deleteNote(id, user.id);
+  }
+
+  @Patch(':id/archive')
+  archiveNote(@Param('id', ParseUUIDPipe) id: string) {
+    return this.notesService.archiveNote(id);
+  }
+
+  @Patch(':id/trash')
+  trashNote(@Param('id', ParseUUIDPipe) id: string) {
+    return this.notesService.trashNote(id);
+  }
+
+  @Patch(':id/restore')
+  restoreNote(@Param('id', ParseUUIDPipe) id: string) {
+    return this.notesService.restoreNote(id);
   }
 }

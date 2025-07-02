@@ -11,6 +11,7 @@ import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { Tag } from 'src/tag/entities/tag.entity';
 import { Category } from 'src/category/entities/category.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class NotesService {
@@ -23,6 +24,8 @@ export class NotesService {
 
     @InjectRepository(Category)
     private readonly categoryRepo: Repository<Category>,
+
+    private prisma: PrismaService,
   ) {}
 
   async createNote(userId: number, dto: CreateNoteDto): Promise<Note> {
@@ -50,10 +53,11 @@ export class NotesService {
     toDate,
     limit,
     page,
-    sortBy = 'updatedAt',
+    sortBy = 'createdAt',
     order = 'DESC',
+    filter = 'all',
   }: {
-    userId: number;
+    userId: string;
     search?: string;
     fromDate?: string;
     toDate?: string;
@@ -61,44 +65,51 @@ export class NotesService {
     page: number;
     sortBy?: string;
     order?: string;
+    filter?: 'all' | 'archived' | 'trashed';
   }) {
-    const validSortFields: (keyof Note)[] = ['createdAt', 'updatedAt', 'name'];
-    const safeSortBy = validSortFields.includes(sortBy as keyof Note)
-      ? (sortBy as keyof Note)
-      : 'updatedAt';
+    // ✅ Normalize sort order
+    const normalizedOrder = order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-    const safeOrder: 'ASC' | 'DESC' =
-      order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-
-    let query = this.noteRepo
+    const qb = this.noteRepo
       .createQueryBuilder('note')
-      .leftJoinAndSelect('note.tags', 'tag')
+      .leftJoinAndSelect('note.tags', 'tags')
       .leftJoinAndSelect('note.category', 'category')
       .where('note.userId = :userId', { userId });
 
+    if (fromDate) {
+      qb.andWhere('note.createdAt >= :fromDate', { fromDate });
+    }
+
+    if (toDate) {
+      qb.andWhere('note.createdAt <= :toDate', { toDate });
+    }
+    if (filter === 'archived') {
+      qb.andWhere('note.isArchived = true');
+    } else if (filter === 'trashed') {
+      qb.andWhere('note.isTrashed = true');
+    } else {
+      // Default: active notes only (not archived or trashed)
+      qb.andWhere('note.isArchived = false');
+      qb.andWhere('note.isTrashed = false');
+    }
+
     if (search) {
-      query = query.andWhere(
-        '(note.name ILIKE :search OR note.content ILIKE :search)',
+      qb.andWhere(
+        '(LOWER(note.name) LIKE LOWER(:search) OR LOWER(note.content) LIKE LOWER(:search))',
         { search: `%${search}%` },
       );
     }
 
-    if (fromDate) {
-      query = query.andWhere('note.createdAt >= :fromDate', { fromDate });
-    }
-
-    if (toDate) {
-      query = query.andWhere('note.createdAt <= :toDate', { toDate });
-    }
-
-    const [notes, totalCount] = await query
-      .orderBy(`note.${safeSortBy}`, safeOrder)
+    const [notes, total] = await qb
+      .orderBy(`note.${sortBy}`, normalizedOrder)
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
 
-    const totalPages = Math.ceil(totalCount / limit);
-    return { notes, totalPages };
+    return {
+      notes,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findNoteById(id: string): Promise<Note | null> {
@@ -176,5 +187,35 @@ export class NotesService {
     });
     if (!category) throw new BadRequestException('Invalid category ID');
     return category;
+  }
+
+  async archiveNote(id: string) {
+    return this.noteRepo.update(id, { isArchived: true });
+  }
+
+  async trashNote(id: string) {
+    return this.noteRepo.update(id, { isTrashed: true });
+  }
+
+  async restoreNote(id: string) {
+    return this.noteRepo.update(id, {
+      isArchived: false,
+      isTrashed: false,
+    });
+  }
+  // notes.service.ts
+
+  async getNoteCount(
+    filter: 'all' | 'archived' | 'trashed',
+    userId: string,
+  ): Promise<{ count: number }> {
+    const where: any = { userId };
+
+    if (filter === 'archived') where.isArchived = true;
+    else if (filter === 'trashed') where.isTrashed = true;
+    // 'all' → no extra flags
+
+    const count = await this.noteRepo.count({ where });
+    return { count };
   }
 }

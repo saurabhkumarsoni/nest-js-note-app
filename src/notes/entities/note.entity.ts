@@ -13,6 +13,13 @@ import { User } from 'src/users/entities/user.entity';
 import { Tag } from 'src/tag/entities/tag.entity';
 import { Category } from '../../category/entities/category.entity';
 
+export enum NotePriority {
+  LOW = 'Low',
+  MEDIUM = 'Medium',
+  HIGH = 'High',
+  URGENT = 'Urgent',
+}
+
 @Entity()
 export class Note {
   @PrimaryGeneratedColumn('uuid')
@@ -44,6 +51,15 @@ export class Note {
 
   @Column({ nullable: true })
   categoryId: number | null;
+
+  @Column({ type: 'enum', enum: NotePriority, default: NotePriority.MEDIUM })
+  priority: NotePriority;
+
+  @Column({ default: false })
+  isArchived: boolean;
+
+  @Column({ default: false })
+  isTrashed: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

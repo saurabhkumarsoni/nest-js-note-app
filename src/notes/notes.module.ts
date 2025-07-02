@@ -9,6 +9,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { HttpModule } from '@nestjs/axios';
 import { Tag } from 'src/tag/entities/tag.entity';
 import { Category } from 'src/category/entities/category.entity';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Category } from 'src/category/entities/category.entity';
     UsersModule,
     CacheModule.register(),
     HttpModule,
+    PrismaModule,
   ],
   controllers: [NotesController],
   providers: [NotesService],

@@ -1,4 +1,13 @@
-import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { NotePriority } from '../entities/note.entity';
 
 export class CreateNoteDto {
   @IsNotEmpty()
@@ -20,4 +29,16 @@ export class CreateNoteDto {
   @IsOptional()
   @IsInt()
   categoryId?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isArchived: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isTrashed: boolean;
+
+  @IsEnum(NotePriority)
+  @IsOptional()
+  priority?: NotePriority;
 }
