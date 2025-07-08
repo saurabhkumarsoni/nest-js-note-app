@@ -1,13 +1,14 @@
 import {
   IsArray,
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
-import { NotePriority } from '../entities/note.entity';
+import { NotePriority } from 'src/notes/entities/note.entity';
 
 export class CreateNoteDto {
   @IsNotEmpty()
@@ -41,4 +42,8 @@ export class CreateNoteDto {
   @IsEnum(NotePriority)
   @IsOptional()
   priority?: NotePriority;
+
+  @IsOptional()
+  @IsDateString()
+  reminderAt?: string;
 }

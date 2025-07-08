@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Tag } from 'src/tag/entities/tag.entity';
-import { Category } from '../../category/entities/category.entity';
+import { Category } from 'src/category/entities/category.entity';
 
 export enum NotePriority {
   LOW = 'Low',
@@ -35,7 +35,7 @@ export class Note {
   quoteId?: string;
 
   @Column()
-  userId: number;
+  userId: string;
 
   @ManyToOne(() => User, (user) => user.notes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
@@ -66,4 +66,7 @@ export class Note {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  reminderAt: Date | null;
 }

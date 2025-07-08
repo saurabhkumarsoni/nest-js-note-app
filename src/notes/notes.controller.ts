@@ -20,7 +20,7 @@ import { Request } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Note } from './entities/note.entity';
-import { GetUser } from '../auth/decorators/get-user.decorator';
+
 @ApiTags('Notes')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -84,6 +84,32 @@ export class NotesController {
       order,
       filter,
     });
+  }
+
+  @Get('reminders')
+  async getReminders(@Req() req: Request) {
+    const user = req.user as any;
+    const userId = user.id;
+
+    const now = new Date();
+    const upcoming = new Date(now.getTime() + 5 * 60_000); // next 5 mins
+    const recent = new Date(now.getTime() - 1 * 60_000); // past 1 min
+
+    const dueNotes = await this.notesService.findDueReminders(
+      userId,
+      recent,
+      now,
+    );
+    const upcomingNotes = await this.notesService.findDueReminders(
+      userId,
+      now,
+      upcoming,
+    );
+
+    return {
+      due: dueNotes,
+      upcoming: upcomingNotes,
+    };
   }
 
   @Get('count')

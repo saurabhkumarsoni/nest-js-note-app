@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Note } from './entities/note.entity';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
@@ -28,7 +28,7 @@ export class NotesService {
     private prisma: PrismaService,
   ) {}
 
-  async createNote(userId: number, dto: CreateNoteDto): Promise<Note> {
+  async createNote(userId: string, dto: CreateNoteDto): Promise<Note> {
     const category = await this.getCategoryOrFail(dto.categoryId);
 
     const normalizedTags = this.extractTagNames(dto.tags ?? []);
@@ -141,7 +141,7 @@ export class NotesService {
     return this.noteRepo.save(updated);
   }
 
-  async deleteNote(id: string, userId: number): Promise<{ message: string }> {
+  async deleteNote(id: string, userId: string): Promise<{ message: string }> {
     const note = await this.findNoteById(id);
     if (!note) throw new NotFoundException('Note not found');
     if (note.userId !== userId) throw new ForbiddenException('Access denied');
@@ -217,5 +217,24 @@ export class NotesService {
 
     const count = await this.noteRepo.count({ where });
     return { count };
+  }
+
+  async findDueReminders(
+    userId: string,
+    from: Date,
+    to: Date,
+  ): Promise<Note[]> {
+    return this.noteRepo.find({
+      where: {
+        userId,
+        reminderAt: Between(from, to),
+        isTrashed: false,
+        isArchived: false,
+      },
+    });
+  }
+
+  async clearReminder(id: string) {
+    await this.noteRepo.update(id, { reminderAt: null });
   }
 }

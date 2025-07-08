@@ -1,5 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Note } from '../../notes/entities/note.entity';
+import { Note } from 'src/notes/entities/note.entity';
 import { Exclude } from 'class-transformer';
 
 @Entity('users')

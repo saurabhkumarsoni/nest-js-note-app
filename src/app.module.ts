@@ -9,9 +9,11 @@ import { ResourceManagerModule } from './resource-manager/resource-manager.modul
 import { StaticDataModule } from './static-data/static-data.module';
 import { TagModule } from './tag/tag.module';
 import { CategoryModule } from './category/category.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
     TypeOrmModule.forRoot({
       type: 'postgres',
